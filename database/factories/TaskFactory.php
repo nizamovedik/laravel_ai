@@ -18,7 +18,7 @@ class TaskFactory extends Factory
             'title' => $this->faker->sentence(),
             'description' => $this->faker->paragraph(),
             'project_id' => Project::factory(),
-            'status_id' => TaskStatusEnum::NEW->value,
+            'status' => TaskStatusEnum::NEW->value,
             'priority_id' => null,
             'creator_id' => User::factory(),
             'assignee_id' => null,

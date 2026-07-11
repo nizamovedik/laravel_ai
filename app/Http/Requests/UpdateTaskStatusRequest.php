@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Enums\TaskStatusEnum;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateTaskStatusRequest extends FormRequest
@@ -13,8 +14,10 @@ class UpdateTaskStatusRequest extends FormRequest
 
     public function rules(): array
     {
+        $statuses = collect(TaskStatusEnum::cases())->map(fn ($case) => $case->value)->join(',');
+
         return [
-            'status_id' => 'required|integer|exists:task_statuses,id',
+            'status' => "required|string|in:{$statuses}",
         ];
     }
 }

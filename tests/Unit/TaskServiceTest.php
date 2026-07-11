@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Event;
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->task = Task::factory()->create([
-        'status_id' => TaskStatusEnum::NEW->value,
+        'status' => TaskStatusEnum::NEW,
         'creator_id' => $this->user->id,
     ]);
     $this->taskService = app(TaskService::class);
@@ -24,7 +24,7 @@ test('can transition from NEW to IN_PROGRESS', function () {
     );
 
     expect($result)->toBeTrue();
-    expect($this->task->fresh()->status_id)->toBe(TaskStatusEnum::IN_PROGRESS);
+    expect($this->task->fresh()->status)->toBe(TaskStatusEnum::IN_PROGRESS);
 });
 
 test('can transition from NEW to ON_HOLD', function () {
@@ -35,7 +35,7 @@ test('can transition from NEW to ON_HOLD', function () {
     );
 
     expect($result)->toBeTrue();
-    expect($this->task->fresh()->status_id)->toBe(TaskStatusEnum::ON_HOLD);
+    expect($this->task->fresh()->status)->toBe(TaskStatusEnum::ON_HOLD);
 });
 
 test('cannot transition from NEW to REVIEW directly', function () {
@@ -50,7 +50,7 @@ test('cannot transition from NEW to REVIEW directly', function () {
 });
 
 test('can transition from IN_PROGRESS to REVIEW', function () {
-    $this->task->update(['status_id' => TaskStatusEnum::IN_PROGRESS->value]);
+    $this->task->update(['status' => TaskStatusEnum::IN_PROGRESS]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
@@ -59,11 +59,11 @@ test('can transition from IN_PROGRESS to REVIEW', function () {
     );
 
     expect($result)->toBeTrue();
-    expect($this->task->fresh()->status_id)->toBe(TaskStatusEnum::REVIEW);
+    expect($this->task->fresh()->status)->toBe(TaskStatusEnum::REVIEW);
 });
 
 test('can transition from REVIEW to DONE', function () {
-    $this->task->update(['status_id' => TaskStatusEnum::REVIEW->value]);
+    $this->task->update(['status' => TaskStatusEnum::REVIEW]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
@@ -72,11 +72,11 @@ test('can transition from REVIEW to DONE', function () {
     );
 
     expect($result)->toBeTrue();
-    expect($this->task->fresh()->status_id)->toBe(TaskStatusEnum::DONE);
+    expect($this->task->fresh()->status)->toBe(TaskStatusEnum::DONE);
 });
 
 test('can transition from DONE to CLOSED', function () {
-    $this->task->update(['status_id' => TaskStatusEnum::DONE->value]);
+    $this->task->update(['status' => TaskStatusEnum::DONE]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
@@ -85,11 +85,11 @@ test('can transition from DONE to CLOSED', function () {
     );
 
     expect($result)->toBeTrue();
-    expect($this->task->fresh()->status_id)->toBe(TaskStatusEnum::CLOSED);
+    expect($this->task->fresh()->status)->toBe(TaskStatusEnum::CLOSED);
 });
 
 test('cannot transition from CLOSED to any status', function () {
-    $this->task->update(['status_id' => TaskStatusEnum::CLOSED->value]);
+    $this->task->update(['status' => TaskStatusEnum::CLOSED]);
 
     $this->expectException(InvalidArgumentException::class);
 
@@ -101,7 +101,7 @@ test('cannot transition from CLOSED to any status', function () {
 });
 
 test('can transition from ON_HOLD to NEW', function () {
-    $this->task->update(['status_id' => TaskStatusEnum::ON_HOLD->value]);
+    $this->task->update(['status' => TaskStatusEnum::ON_HOLD]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
@@ -110,11 +110,11 @@ test('can transition from ON_HOLD to NEW', function () {
     );
 
     expect($result)->toBeTrue();
-    expect($this->task->fresh()->status_id)->toBe(TaskStatusEnum::NEW);
+    expect($this->task->fresh()->status)->toBe(TaskStatusEnum::NEW);
 });
 
 test('can transition from DONE back to REVIEW', function () {
-    $this->task->update(['status_id' => TaskStatusEnum::DONE->value]);
+    $this->task->update(['status' => TaskStatusEnum::DONE]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
@@ -123,11 +123,11 @@ test('can transition from DONE back to REVIEW', function () {
     );
 
     expect($result)->toBeTrue();
-    expect($this->task->fresh()->status_id)->toBe(TaskStatusEnum::REVIEW);
+    expect($this->task->fresh()->status)->toBe(TaskStatusEnum::REVIEW);
 });
 
 test('can transition from REVIEW back to IN_PROGRESS', function () {
-    $this->task->update(['status_id' => TaskStatusEnum::REVIEW->value]);
+    $this->task->update(['status' => TaskStatusEnum::REVIEW]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
@@ -136,7 +136,7 @@ test('can transition from REVIEW back to IN_PROGRESS', function () {
     );
 
     expect($result)->toBeTrue();
-    expect($this->task->fresh()->status_id)->toBe(TaskStatusEnum::IN_PROGRESS);
+    expect($this->task->fresh()->status)->toBe(TaskStatusEnum::IN_PROGRESS);
 });
 
 test('started_at is set when transitioning to IN_PROGRESS', function () {
@@ -154,7 +154,7 @@ test('started_at is set when transitioning to IN_PROGRESS', function () {
 test('completed_at is set when transitioning to DONE', function () {
     $this->task->update([
         'completed_at' => null,
-        'status_id' => TaskStatusEnum::REVIEW->value,
+        'status' => TaskStatusEnum::REVIEW,
     ]);
 
     $this->taskService->changeStatus(
@@ -169,7 +169,7 @@ test('completed_at is set when transitioning to DONE', function () {
 test('completed_at is set when transitioning to CLOSED', function () {
     $this->task->update([
         'completed_at' => null,
-        'status_id' => TaskStatusEnum::DONE->value,
+        'status' => TaskStatusEnum::DONE,
     ]);
 
     $this->taskService->changeStatus(

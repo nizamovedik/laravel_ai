@@ -2,18 +2,15 @@
 
 namespace App\Enums;
 
-enum TaskStatusEnum: int
+enum TaskStatusEnum: string
 {
-    case NEW = 1;
-    case IN_PROGRESS = 2;
-    case REVIEW = 3;
-    case DONE = 4;
-    case CLOSED = 5;
-    case ON_HOLD = 6;
+    case NEW = 'new';
+    case IN_PROGRESS = 'in_progress';
+    case REVIEW = 'review';
+    case DONE = 'done';
+    case CLOSED = 'closed';
+    case ON_HOLD = 'on_hold';
 
-    /**
-     * Возвращает человекочитаемое название статуса
-     */
     public function label(): string
     {
         return match ($this) {
@@ -26,83 +23,26 @@ enum TaskStatusEnum: int
         };
     }
 
-    /**
-     * Возвращает slug для URL или системного использования
-     */
-    public function slug(): string
-    {
-        return match ($this) {
-            self::NEW => 'new',
-            self::IN_PROGRESS => 'in_progress',
-            self::REVIEW => 'review',
-            self::DONE => 'done',
-            self::CLOSED => 'closed',
-            self::ON_HOLD => 'on_hold',
-        };
-    }
-
-    /**
-     * Проверяет, разрешён ли переход из текущего статуса в целевой
-     */
     public function canTransitionTo(TaskStatusEnum $targetStatus): bool
     {
-        // Определяем разрешённые переходы для каждого статуса
         return match ($this) {
-            // Из "Новой" можно перейти в "В работу" или "Отложена"
-            self::NEW => in_array($targetStatus, [
-                self::IN_PROGRESS,
-                self::ON_HOLD,
-            ]),
-
-            // Из "В работе" можно перейти в "На ревью" или "Отложена"
-            self::IN_PROGRESS => in_array($targetStatus, [
-                self::REVIEW,
-                self::ON_HOLD,
-            ]),
-
-            // Из "На ревью" можно перейти в "В работу" (если есть замечания) или "Готово"
-            self::REVIEW => in_array($targetStatus, [
-                self::IN_PROGRESS,
-                self::DONE,
-            ]),
-
-            // Из "Готово" можно перейти в "Закрыта" или вернуть в "На ревью" (если ошибка)
-            self::DONE => in_array($targetStatus, [
-                self::CLOSED,
-                self::REVIEW,
-            ]),
-
-            // "Закрыта" — финальный статус. Никуда нельзя перейти.
+            self::NEW => in_array($targetStatus, [self::IN_PROGRESS, self::ON_HOLD]),
+            self::IN_PROGRESS => in_array($targetStatus, [self::REVIEW, self::ON_HOLD]),
+            self::REVIEW => in_array($targetStatus, [self::IN_PROGRESS, self::DONE]),
+            self::DONE => in_array($targetStatus, [self::CLOSED, self::REVIEW]),
             self::CLOSED => false,
-
-            // Из "Отложена" можно вернуть в "Новую" или "В работу"
-            self::ON_HOLD => in_array($targetStatus, [
-                self::NEW,
-                self::IN_PROGRESS,
-            ]),
+            self::ON_HOLD => in_array($targetStatus, [self::NEW, self::IN_PROGRESS]),
         };
     }
 
-    /**
-     * Проверяет, является ли статус финальным (завершающим)
-     */
     public function isFinal(): bool
     {
-        return match ($this) {
-            self::CLOSED => true,
-            default => false,
-        };
+        return $this === self::CLOSED;
     }
 
-    /**
-     * Проверяет, является ли статус активным (в процессе работы)
-     */
     public function isActive(): bool
     {
-        return match ($this) {
-            self::IN_PROGRESS, self::REVIEW => true,
-            default => false,
-        };
+        return in_array($this, [self::IN_PROGRESS, self::REVIEW]);
     }
 
     /**

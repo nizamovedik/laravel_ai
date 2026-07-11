@@ -6,6 +6,7 @@ use App\Enums\TaskStatusEnum;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful;
 use Tests\TestCase;
 
 class TaskStatusTest extends TestCase
@@ -21,10 +22,11 @@ class TaskStatusTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+        $this->withoutMiddleware(EnsureFrontendRequestsAreStateful::class);
 
         $this->user = User::factory()->create();
         $this->task = Task::factory()->create([
-            'status_id' => TaskStatusEnum::NEW->value,
+            'status' => TaskStatusEnum::NEW,
             'creator_id' => $this->user->id,
             'assignee_id' => $this->user->id,
         ]);
@@ -35,7 +37,7 @@ class TaskStatusTest extends TestCase
     {
         $response = $this->actingAs($this->user)
             ->putJson("/api/tasks/{$this->task->id}/status", [
-                'status_id' => TaskStatusEnum::IN_PROGRESS->value,
+                'status' => TaskStatusEnum::IN_PROGRESS,
             ]);
 
         $response->assertStatus(200)
@@ -45,7 +47,7 @@ class TaskStatusTest extends TestCase
 
         $this->assertDatabaseHas('tasks', [
             'id' => $this->task->id,
-            'status_id' => TaskStatusEnum::IN_PROGRESS->value,
+            'status' => TaskStatusEnum::IN_PROGRESS,
         ]);
     }
 
@@ -53,7 +55,7 @@ class TaskStatusTest extends TestCase
     public function unauthenticated_user_cannot_change_task_status(): void
     {
         $response = $this->putJson("/api/tasks/{$this->task->id}/status", [
-            'status_id' => TaskStatusEnum::IN_PROGRESS->value,
+            'status' => TaskStatusEnum::IN_PROGRESS,
         ]);
 
         $response->assertStatus(401);
@@ -64,21 +66,21 @@ class TaskStatusTest extends TestCase
     {
         $response = $this->actingAs($this->user)
             ->putJson("/api/tasks/{$this->task->id}/status", [
-                'status_id' => 999,
+                'status' => 999,
             ]);
 
         $response->assertStatus(422);
-        $response->assertJsonValidationErrors(['status_id']);
+        $response->assertJsonValidationErrors(['status']);
     }
 
     /** @test */
     public function cannot_transition_to_not_allowed_status(): void
     {
-        $this->task->update(['status_id' => TaskStatusEnum::NEW->value]);
+        $this->task->update(['status' => TaskStatusEnum::NEW]);
 
         $response = $this->actingAs($this->user)
             ->putJson("/api/tasks/{$this->task->id}/status", [
-                'status_id' => TaskStatusEnum::REVIEW->value,
+                'status' => TaskStatusEnum::REVIEW,
             ]);
 
         $response->assertStatus(422)
@@ -92,7 +94,7 @@ class TaskStatusTest extends TestCase
     {
         $this->actingAs($this->user)
             ->putJson("/api/tasks/{$this->task->id}/status", [
-                'status_id' => TaskStatusEnum::IN_PROGRESS->value,
+                'status' => TaskStatusEnum::IN_PROGRESS,
             ]);
 
         $this->assertDatabaseHas('task_histories', [
@@ -111,7 +113,7 @@ class TaskStatusTest extends TestCase
 
         $this->actingAs($this->user)
             ->putJson("/api/tasks/{$this->task->id}/status", [
-                'status_id' => TaskStatusEnum::IN_PROGRESS->value,
+                'status' => TaskStatusEnum::IN_PROGRESS,
             ]);
 
         $this->assertDatabaseHas('tasks', [
@@ -124,13 +126,13 @@ class TaskStatusTest extends TestCase
     public function completed_at_is_set_when_transitioning_to_done(): void
     {
         $this->task->update([
-            'status_id' => TaskStatusEnum::REVIEW->value,
+            'status' => TaskStatusEnum::REVIEW,
             'completed_at' => null,
         ]);
 
         $this->actingAs($this->user)
             ->putJson("/api/tasks/{$this->task->id}/status", [
-                'status_id' => TaskStatusEnum::DONE->value,
+                'status' => TaskStatusEnum::DONE,
             ]);
 
         $this->assertDatabaseHas('tasks', [
@@ -142,45 +144,45 @@ class TaskStatusTest extends TestCase
     /** @test */
     public function user_can_transition_task_from_on_hold_to_new(): void
     {
-        $this->task->update(['status_id' => TaskStatusEnum::ON_HOLD->value]);
+        $this->task->update(['status' => TaskStatusEnum::ON_HOLD]);
 
         $response = $this->actingAs($this->user)
             ->putJson("/api/tasks/{$this->task->id}/status", [
-                'status_id' => TaskStatusEnum::NEW->value,
+                'status' => TaskStatusEnum::NEW,
             ]);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('tasks', [
             'id' => $this->task->id,
-            'status_id' => TaskStatusEnum::NEW->value,
+            'status' => TaskStatusEnum::NEW,
         ]);
     }
 
     /** @test */
     public function user_can_transition_task_from_done_back_to_review(): void
     {
-        $this->task->update(['status_id' => TaskStatusEnum::DONE->value]);
+        $this->task->update(['status' => TaskStatusEnum::DONE]);
 
         $response = $this->actingAs($this->user)
             ->putJson("/api/tasks/{$this->task->id}/status", [
-                'status_id' => TaskStatusEnum::REVIEW->value,
+                'status' => TaskStatusEnum::REVIEW,
             ]);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('tasks', [
             'id' => $this->task->id,
-            'status_id' => TaskStatusEnum::REVIEW->value,
+            'status' => TaskStatusEnum::REVIEW,
         ]);
     }
 
     /** @test */
     public function user_cannot_transition_closed_task(): void
     {
-        $this->task->update(['status_id' => TaskStatusEnum::CLOSED->value]);
+        $this->task->update(['status' => TaskStatusEnum::CLOSED]);
 
         $response = $this->actingAs($this->user)
             ->putJson("/api/tasks/{$this->task->id}/status", [
-                'status_id' => TaskStatusEnum::NEW->value,
+                'status' => TaskStatusEnum::NEW,
             ]);
 
         $response->assertStatus(422)
@@ -192,17 +194,17 @@ class TaskStatusTest extends TestCase
     /** @test */
     public function user_can_transition_task_from_review_to_in_progress(): void
     {
-        $this->task->update(['status_id' => TaskStatusEnum::REVIEW->value]);
+        $this->task->update(['status' => TaskStatusEnum::REVIEW]);
 
         $response = $this->actingAs($this->user)
             ->putJson("/api/tasks/{$this->task->id}/status", [
-                'status_id' => TaskStatusEnum::IN_PROGRESS->value,
+                'status' => TaskStatusEnum::IN_PROGRESS,
             ]);
 
         $response->assertStatus(200);
         $this->assertDatabaseHas('tasks', [
             'id' => $this->task->id,
-            'status_id' => TaskStatusEnum::IN_PROGRESS->value,
+            'status' => TaskStatusEnum::IN_PROGRESS,
         ]);
     }
 }

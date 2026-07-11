@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class Task extends Model
 {
@@ -16,7 +17,7 @@ class Task extends Model
         'title',
         'description',
         'project_id',
-        'status_id',
+        'status',
         'priority_id',
         'creator_id',
         'assignee_id',
@@ -31,7 +32,7 @@ class Task extends Model
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'estimated_hours' => 'decimal:2',
-        'status_id' => TaskStatusEnum::class,
+        'status' => TaskStatusEnum::class,
     ];
 
     // Связи
@@ -91,5 +92,10 @@ class Task extends Model
     public function isOverdue(): bool
     {
         return $this->deadline_at && $this->deadline_at->isPast() && ! $this->isClosed();
+    }
+
+    public function comments(): MorphMany
+    {
+        return $this->morphMany(Comment::class, 'commentable');
     }
 }

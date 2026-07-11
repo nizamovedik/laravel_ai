@@ -18,7 +18,7 @@ return new class extends Migration
 
             // Внешние ключи
             $table->foreignId('project_id')->constrained('projects')->cascadeOnDelete();
-            $table->foreignId('status_id')->constrained('task_statuses');
+            $table->string('status')->default('new');
             $table->foreignId('priority_id')->nullable()->constrained('task_priorities')->nullOnDelete();
             $table->foreignId('creator_id')->constrained('users');
             $table->foreignId('assignee_id')->nullable()->constrained('users')->nullOnDelete();
@@ -32,9 +32,6 @@ return new class extends Migration
             $table->decimal('estimated_hours', 5, 2)->nullable();
 
             $table->timestamps();
-
-            $table->index(['project_id', 'status_id']);
-            $table->index(['assignee_id', 'status_id']);
         });
     }
 

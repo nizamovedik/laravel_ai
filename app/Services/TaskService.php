@@ -23,7 +23,7 @@ class TaskService
             // Создаём задачу всегда со статусом "Новая"
             $task = $this->taskRepository->create(
                 array_merge($data->toArray(), [
-                    'status_id' => TaskStatusEnum::NEW->value,
+                    'status' => TaskStatusEnum::NEW,
                 ])
             );
 
@@ -38,8 +38,7 @@ class TaskService
      */
     public function changeStatus(Task $task, TaskStatusEnum $newStatus, int $changedByUserId): bool
     {
-        // $task->status_id уже является Enum благодаря касту
-        $currentStatus = $task->status_id;
+        $currentStatus = $task->status;
 
         if (! $currentStatus instanceof TaskStatusEnum) {
             throw new InvalidArgumentException('Некорректный статус задачи');
@@ -94,5 +93,34 @@ class TaskService
     public function assignTask(Task $task, ?int $assigneeId): bool
     {
         return $this->taskRepository->setAssignee($task, $assigneeId);
+    }
+
+    public function updateTask(Task $task, TaskData $data, int $userId): Task
+    {
+        $updateData = array_filter([
+            'title' => $data->title,
+            'description' => $data->description,
+            'priority_id' => $data->priorityId,
+            'assignee_id' => $data->assigneeId,
+            'deadline_at' => $data->deadlineAt,
+            'estimated_hours' => $data->estimatedHours,
+        ], fn ($value) => ! is_null($value));
+
+        $this->taskRepository->update($task, $updateData);
+
+        // Логируем обновление
+        Log::info("Задача {$task->id} обновлена пользователем {$userId}");
+
+        return $task->fresh();
+    }
+
+    public function deleteTask(Task $task): void
+    {
+        $this->taskRepository->delete($task);
+    }
+
+    public function syncLabels(Task $task, array $labelIds): void
+    {
+        $this->taskRepository->syncLabels($task, $labelIds);
     }
 }

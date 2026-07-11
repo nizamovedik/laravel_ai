@@ -2,6 +2,7 @@
 
 namespace App\Repositories;
 
+use App\Enums\TaskStatusEnum;
 use App\Models\Task;
 use Illuminate\Support\Collection;
 
@@ -9,6 +10,8 @@ class TaskRepository
 {
     public function create(array $data): Task
     {
+        $data['status'] = $data['status'] ?? TaskStatusEnum::NEW->value;
+
         return Task::create($data);
     }
 
@@ -32,9 +35,9 @@ class TaskRepository
         return $task->update($data);
     }
 
-    public function updateStatus(Task $task, int $statusId): bool
+    public function updateStatus(Task $task, string $status): bool
     {
-        return $task->update(['status_id' => $statusId]);
+        return $task->update(['status' => $status]);
     }
 
     public function setAssignee(Task $task, ?int $assigneeId): bool
@@ -56,5 +59,25 @@ class TaskRepository
         return $task->update([
             'completed_at' => now(),
         ]);
+    }
+
+    public function delete(Task $task): void
+    {
+        $task->delete($task);
+    }
+
+    public function syncLabels(Task $task, array $labelIds): void
+    {
+        $task->labels()->sync($labelIds);
+    }
+
+    public function attachLabels(Task $task, array $labelIds): void
+    {
+        $task->labels()->attach($labelIds);
+    }
+
+    public function detachLabels(Task $task, array $labelIds): void
+    {
+        $task->labels()->detach($labelIds);
     }
 }

@@ -11,6 +11,7 @@ class TaskData
         public readonly ?string $description,
         public readonly int $projectId,
         public readonly int $creatorId,
+        public readonly string $status,
         public readonly ?int $priorityId,
         public readonly ?int $assigneeId,
         public readonly ?Carbon $deadlineAt,
