@@ -24,22 +24,26 @@ class TaskResource extends JsonResource
                     'name' => $status->label(),
                 ] : null;
             }),
-            'priority' => $this->priority ? [
-                'id' => $this->priority_id,
-                'name' => $this->priority->name,
-            ] : null,
+            'priority' => $this->when($this->priority, function () {
+                return [
+                    'id' => $this->priority->id,
+                    'name' => $this->priority->name,
+                    'code' => $this->priority->code,
+                    'level' => $this->priority->level,
+                ];
+            }),
             'creator' => $this->creator ? [
-                'id' => $this->creator->id,
-                'name' => $this->creator->name,
-            ] : null,
+                            'id' => $this->creator->id,
+                            'name' => $this->creator->name,
+                        ] : null,
             'assignee' => $this->assignee ? [
-                'id' => $this->assignee->id,
-                'name' => $this->assignee->name,
-            ] : null,
+                            'id' => $this->assignee->id,
+                            'name' => $this->assignee->name,
+                        ] : null,
             'project' => $this->project ? [
-                'id' => $this->project->id,
-                'name' => $this->project->name,
-            ] : null,
+                            'id' => $this->project->id,
+                            'name' => $this->project->name,
+                        ] : null,
             'labels' => $this->whenLoaded('labels', function () {
                 return $this->labels->map(fn ($label) => [
                     'id' => $label->id,

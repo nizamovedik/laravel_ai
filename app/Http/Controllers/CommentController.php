@@ -70,6 +70,6 @@ class CommentController extends Controller
             (int) request()->user()->id
         );
 
-        return response()->json(['message' => 'Комментарий удалён'], 200);
+        return response()->json(['message' => 'Комментарий удалён!'], 200);
     }
 }

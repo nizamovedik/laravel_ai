@@ -34,7 +34,7 @@ class CommentSeeder extends Seeder
                 ->create([
                     'user_id' => $user->id,
                     'commentable_id' => $task->id,
-                    'commentable_type' => Task::class,
+                    'commentable_type' => 'task',
                 ]);
         }
 
@@ -48,7 +48,7 @@ class CommentSeeder extends Seeder
                 ->create([
                     'user_id' => $user->id,
                     'commentable_id' => $project->id,
-                    'commentable_type' => Project::class,
+                    'commentable_type' => 'project',
                 ]);
         }
     }

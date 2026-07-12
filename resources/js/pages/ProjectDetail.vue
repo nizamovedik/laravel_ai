@@ -1,60 +1,86 @@
 <template>
-    <div class="p-6">
-        <div class="flex justify-between items-center mb-6">
-            <div>
-                <h1 class="text-2xl font-bold">{{ project.name }}</h1>
-                <p class="text-gray-500">{{ project.description }}</p>
-            </div>
-            <button @click="router.push(`/projects/${project.id}/tasks/create`)" class="bg-blue-600 text-white px-4 py-2 rounded cursor-pointer">
-                + Новая задача
-            </button>
+  <AuthenticatedLayout>
+    <div class="max-w-full">
+      <!-- Хедер проекта -->
+      <div class="mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <div class="flex items-center space-x-2 text-sm text-gray-400">
+            <router-link to="/projects" class="hover:text-indigo-600">Проекты</router-link>
+            <span>/</span>
+            <span class="text-gray-600">{{ project.name }}</span>
+          </div>
+          <h1 class="text-2xl font-bold text-gray-800 mt-1">{{ project.name }}</h1>
+          <p class="text-gray-500 text-sm mt-0.5">{{ project.description || 'Без описания' }}</p>
+          <div class="flex items-center space-x-4 mt-1 text-xs text-gray-400">
+            <span class="flex items-center gap-1"><UserIcon class="w-3.5 h-3.5" /> Владелец: {{ project.owner?.name || 'Не указан' }}</span>
+            <span class="flex items-center gap-1"><UserIcon class="w-3.5 h-3.5" /> Тимлид: {{ project.team_lead?.name || 'Не указан' }}</span>
+          </div>
         </div>
 
-        <div class="space-y-4">
-            <div v-for="task in tasks" :key="task.id" class="border rounded p-4">
-                <div class="flex justify-between">
-                    <div>
-                        <h3 class="text-lg font-semibold">{{ task.name }}</h3>
-                        <p class="text-sm text-gray-500">{{ task.priority.name }}</p>
-                        <p class="text-sm text-gray-500">{{ task.status }}</p>
-                    </div>
-                    <!-- <select v-model="task.status" @change="changeStatus(task)" class="border rounded px-2">
-                        <option v-for="status in statuses" :key="status.id" :value="status.id">
-                            {{ status.name }}
-                        </option>
-                    </select> -->
-                </div>
-            </div>
+        <div class="flex items-center space-x-2">
+          <router-link
+            :to="`/projects/${project.id}/edit`"
+            class="btn btn-secondary"
+          >
+          <PencilSquareIcon class="w-4 h-4" />
+          Редактировать
+          </router-link>
+          <router-link
+            :to="`/projects/${project.id}/tasks/create`"
+            class="btn btn-primary"
+          >
+          <PlusCircleIcon class="w-4 h-4" />
+          Новая задача
+          </router-link>
         </div>
+      </div>
+
+      <!-- Канбан-доска -->
+      <div class="card p-4 mb-6">
+        <KanbanBoard 
+          :tasks="project.tasks || []" 
+          :project-id="project.id"
+        />
+      </div>
+
+      <!-- Комментарии -->
+      <div class="card p-6">
+        <CommentList type="project" :id="projectId" />
+      </div>
     </div>
+  </AuthenticatedLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
+import { useRoute } from 'vue-router';
 import axios from 'axios';
+import AuthenticatedLayout from '../layouts/AuthenticatedLayout.vue';
+import KanbanBoard from '../components/KanbanBoard.vue';
+import CommentList from '../components/CommentList.vue';
+import { PencilSquareIcon, PlusCircleIcon, UserIcon } from '../components/icons';
 
-const router = useRouter();
 const route = useRoute();
 const projectId = route.params.id;
 
-const project = ref({});
-const tasks = ref([]);
-// const statuses = ref([]);
-
-onMounted(async () => {
-    const [projectRes] = await Promise.all([//, statusesRes] = await Promise.all([
-        axios.get(`/api/projects/${projectId}`),
-        // axios.get('/api/task-statuses'),
-    ]);
-    project.value = projectRes.data.data;
-    tasks.value = project.value.tasks || [];
-    // statuses.value = statusesRes.data.data;
+const project = ref({
+  name: '',
+  description: '',
+  owner: null,
+  team_lead: null,
+  tasks: [],
 });
 
-// const changeStatus = async (task) => {
-//     await axios.put(`/api/tasks/${task.id}/status`, {
-//         status_id: task.status_id,
-//     });
-// };
+const loadProject = async () => {
+  try {
+    const res = await axios.get(`/api/projects/${projectId}`);
+    project.value = res.data.data;
+  } catch (e) {
+    console.error('Ошибка загрузки проекта', e);
+  }
+};
+
+onMounted(() => {
+  loadProject();
+});
 </script>

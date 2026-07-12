@@ -29,6 +29,7 @@ class ProjectResource extends JsonResource
                     'name' => $task->title,
                     'status' => $task->status,
                     'priority' => $task->priority,
+                    'assignee' => $task->assignee,
                 ]);
             }),
         ];

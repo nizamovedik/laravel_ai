@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Models\Comment;
 use App\Models\Project;
 use App\Models\Task;
+use App\Models\User;
 use App\Policies\CommentPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\TaskPolicy;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
@@ -27,6 +29,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Relation::enforceMorphMap([
+            'task' => Task::class,
+            'project' => Project::class,
+            'comment' => Comment::class,
+            'user' => User::class,
+        ]);
+
         Route::middleware('api')
             ->prefix('api')
             ->group(base_path('routes/api.php'));
