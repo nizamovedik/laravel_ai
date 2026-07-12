@@ -30,19 +30,22 @@ class TaskController extends Controller
      */
     public function index(): AnonymousResourceCollection
     {
-        $tasks = Task::query()
-            ->with(['status', 'priority', 'creator', 'assignee', 'project'])
-            ->when(request('status_id'), fn ($q, $v) => $q->where('status_id', $v))
-            ->when(request('assignee_id'), fn ($q, $v) => $q->where('assignee_id', $v))
-            ->when(request('project_id'), fn ($q, $v) => $q->where('project_id', $v))
-            ->when(request('label_id'), function ($q, $v) {
-                return $q->whereHas('labels', function ($query) use ($v) {
-                    $query->where('task_labels.id', $v);
-                });
-            })
-            ->when(request('search'), fn ($q, $v) => $q->where('title', 'like', "%{$v}%"))
-            ->latest()
-            ->paginate(20);
+        $filters = request()->only(['status_id', 'assignee_id', 'project_id', 'label_id', 'search']);
+
+        $tasks = $this->taskService->getFilteredTasks($filters, 5);
+        // $tasks = Task::query()
+        //     ->with(['status', 'priority', 'creator', 'assignee', 'project'])
+        //     ->when(request('status_id'), fn ($q, $v) => $q->where('status_id', $v))
+        //     ->when(request('assignee_id'), fn ($q, $v) => $q->where('assignee_id', $v))
+        //     ->when(request('project_id'), fn ($q, $v) => $q->where('project_id', $v))
+        //     ->when(request('label_id'), function ($q, $v) {
+        //         return $q->whereHas('labels', function ($query) use ($v) {
+        //             $query->where('task_labels.id', $v);
+        //         });
+        //     })
+        //     ->when(request('search'), fn ($q, $v) => $q->where('title', 'like', "%{$v}%"))
+        //     ->latest()
+        //     ->paginate(20);
 
         return TaskResource::collection($tasks);
     }
@@ -54,7 +57,7 @@ class TaskController extends Controller
     {
         $this->authorize('view', $task);
 
-        return new TaskResource($task->load(['status', 'priority', 'creator', 'assignee', 'project']));
+        return new TaskResource($task->load(['priority', 'creator', 'assignee', 'project']));
     }
 
     /**
@@ -67,7 +70,7 @@ class TaskController extends Controller
 
         return response()->json([
             'message' => 'Задача успешно создана',
-            'task' => new TaskResource($task->load(['project', 'status', 'priority', 'creator', 'assignee'])),
+            'task' => new TaskResource($task->load(['project', 'priority', 'creator', 'assignee'])),
         ], 201);
     }
 
@@ -93,7 +96,7 @@ class TaskController extends Controller
 
         return response()->json([
             'message' => 'Задача успешно обновлена',
-            'task' => new TaskResource($updatedTask->load(['status', 'priority', 'creator', 'assignee', 'project', 'labels'])),
+            'task' => new TaskResource($updatedTask->load(['priority', 'creator', 'assignee', 'project', 'labels'])),
         ], 200);
     }
 

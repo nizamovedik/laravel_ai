@@ -42,11 +42,6 @@ class Task extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function status(): BelongsTo
-    {
-        return $this->belongsTo(TaskStatus::class);
-    }
-
     public function priority(): BelongsTo
     {
         return $this->belongsTo(TaskPriority::class);
@@ -69,30 +64,30 @@ class Task extends Model
 
     // Хелперы
 
-    public function isNew(): bool
-    {
-        return $this->status?->code === 'new';
-    }
+    // public function isNew(): bool
+    // {
+    //     return $this->status?->code === 'new';
+    // }
 
-    public function isInProgress(): bool
-    {
-        return $this->status?->code === 'in_progress';
-    }
+    // public function isInProgress(): bool
+    // {
+    //     return $this->status?->code === 'in_progress';
+    // }
 
-    public function isDone(): bool
-    {
-        return $this->status?->code === 'done';
-    }
+    // public function isDone(): bool
+    // {
+    //     return $this->status?->code === 'done';
+    // }
 
-    public function isClosed(): bool
-    {
-        return $this->status?->code === 'closed';
-    }
+    // public function isClosed(): bool
+    // {
+    //     return $this->status?->code === 'closed';
+    // }
 
-    public function isOverdue(): bool
-    {
-        return $this->deadline_at && $this->deadline_at->isPast() && ! $this->isClosed();
-    }
+    // public function isOverdue(): bool
+    // {
+    //     return $this->deadline_at && $this->deadline_at->isPast() && ! $this->isClosed();
+    // }
 
     public function comments(): MorphMany
     {

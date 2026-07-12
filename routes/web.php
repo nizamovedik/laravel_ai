@@ -1,9 +1,11 @@
 <?php
 
+use App\Http\Controllers\PageController;
 use Illuminate\Support\Facades\Route;
 
-require base_path('routes/api.php');
+Route::get('/login', [PageController::class, 'login'])->name('login');
 
-Route::get('/', function () {
-    return view('welcome');
-});
+// Все остальные страницы — через SPA (только для авторизованных)
+Route::get('/{any}', function () {
+    return view('app');
+})->where('any', '.*');

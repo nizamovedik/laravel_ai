@@ -30,7 +30,7 @@ class TaskLabelRepository
 
     public function delete(TaskLabel $label): bool
     {
-        return $label->delete($label);
+        return $label->delete($label->id);
     }
 
     public function syncLabels(Task $task, array $labelIds): void

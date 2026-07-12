@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\TaskStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -14,27 +15,31 @@ class TaskResource extends JsonResource
             'title' => $this->title,
             'description' => $this->description,
             'status' => $this->when($this->status, function () {
-                return [
-                    'name' => $this->status->label(),
-                    'slug' => $this->status->value,
-                ];
+                $status = $this->status instanceof TaskStatusEnum
+                    ? $this->status
+                    : TaskStatusEnum::tryFrom($this->status);
+
+                return $status ? [
+                    'value' => $status->value,
+                    'name' => $status->label(),
+                ] : null;
             }),
             'priority' => $this->priority ? [
-                            'id' => $this->priority_id,
-                            'name' => $this->priority->name,
-                        ] : null,
+                'id' => $this->priority_id,
+                'name' => $this->priority->name,
+            ] : null,
             'creator' => $this->creator ? [
-                            'id' => $this->creator->id,
-                            'name' => $this->creator->name,
-                        ] : null,
+                'id' => $this->creator->id,
+                'name' => $this->creator->name,
+            ] : null,
             'assignee' => $this->assignee ? [
-                            'id' => $this->assignee->id,
-                            'name' => $this->assignee->name,
-                        ] : null,
+                'id' => $this->assignee->id,
+                'name' => $this->assignee->name,
+            ] : null,
             'project' => $this->project ? [
-                            'id' => $this->project->id,
-                            'name' => $this->project->name,
-                        ] : null,
+                'id' => $this->project->id,
+                'name' => $this->project->name,
+            ] : null,
             'labels' => $this->whenLoaded('labels', function () {
                 return $this->labels->map(fn ($label) => [
                     'id' => $label->id,

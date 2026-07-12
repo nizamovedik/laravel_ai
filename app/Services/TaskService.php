@@ -7,6 +7,7 @@ use App\Enums\TaskStatusEnum;
 use App\Events\TaskStatusChanged;
 use App\Models\Task;
 use App\Repositories\TaskRepository;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
@@ -122,5 +123,10 @@ class TaskService
     public function syncLabels(Task $task, array $labelIds): void
     {
         $this->taskRepository->syncLabels($task, $labelIds);
+    }
+
+    public function getFilteredTasks(array $filters, int $perPage = 20): LengthAwarePaginator
+    {
+        return $this->taskRepository->getFilteredTasks($filters, $perPage);
     }
 }
