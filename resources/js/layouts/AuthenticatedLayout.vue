@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gray-50 flex flex-col">
+  <div class="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50 flex flex-col">
     <!-- Хедер -->
     <AppHeader />
 
@@ -10,7 +10,9 @@
 
       <!-- Основной контент -->
       <main class="flex-1 overflow-y-auto p-6">
-        <slot />
+        <div class="max-w-7xl mx-auto">
+          <slot />
+        </div>
       </main>
     </div>
   </div>

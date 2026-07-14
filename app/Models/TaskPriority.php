@@ -2,19 +2,31 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class TaskPriority extends Model
 {
-    protected $fillable = ['name', 'code', 'level'];
+    use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'code',
+        'level',
+        'color',
+    ];
 
     protected $casts = [
         'level' => 'integer',
     ];
 
-    public function tasks(): HasMany
+    public function tasks()
     {
         return $this->hasMany(Task::class, 'priority_id');
+    }
+
+    public function color(): string
+    {
+        return $this->color ?? '#6b7280';
     }
 }

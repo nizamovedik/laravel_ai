@@ -5,7 +5,7 @@
         <button @click="router.back()" class="text-gray-400 hover:text-gray-600 transition">
           <ArrowLeftIcon class="w-5 h-5" />
         </button>
-        <h1 class="text-2xl font-bold text-gray-800">Создание задачи</h1>
+        <h1 class="text-2xl font-bold text-gray-800">Редактирование задачи</h1>
       </div>
 
       <form @submit.prevent="handleSubmit" class="bg-white rounded-xl shadow-sm border border-gray-200/80 p-6 space-y-5">
@@ -16,6 +16,7 @@
             v-model="form.project_id"
             class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white"
             :class="{ 'border-red-400 ring-1 ring-red-400': errors.project_id }"
+            :disabled="isLoading"
           >
             <option :value="null">Выберите проект</option>
             <option v-for="project in projects" :key="project.id" :value="project.id">
@@ -34,6 +35,7 @@
             class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
             :class="{ 'border-red-400 ring-1 ring-red-400': errors.title }"
             placeholder="Введите название задачи"
+            :disabled="isLoading"
           />
           <p v-if="errors.title" class="mt-1 text-sm text-red-500">{{ errors.title }}</p>
         </div>
@@ -47,6 +49,7 @@
             class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition resize-none"
             :class="{ 'border-red-400 ring-1 ring-red-400': errors.description }"
             placeholder="Опишите задачу (необязательно)"
+            :disabled="isLoading"
           />
           <p v-if="errors.description" class="mt-1 text-sm text-red-500">{{ errors.description }}</p>
         </div>
@@ -57,6 +60,7 @@
           <select
             v-model="form.assignee_id"
             class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white"
+            :disabled="isLoading"
           >
             <option :value="null">Не назначен</option>
             <option v-for="user in users" :key="user.id" :value="user.id">
@@ -71,12 +75,10 @@
           <select
             v-model="form.priority_id"
             class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white"
+            :disabled="isLoading"
           >
             <option :value="null">Не указан</option>
-            <option v-for="priority in priorities" 
-              :key="priority.id" 
-              :value="priority.id"  
-              :style="{ backgroundColor: priority.color || '#e5e7eb', color: '#1f2937' }">
+            <option v-for="priority in priorities" :key="priority.id" :value="priority.id">
               {{ priority.name }}
             </option>
           </select>
@@ -89,6 +91,7 @@
             v-model="form.label_ids"
             multiple
             class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition bg-white min-h-[80px]"
+            :disabled="isLoading"
           >
             <option v-for="label in labels" :key="label.id" :value="label.id">
               {{ label.name }}
@@ -105,6 +108,7 @@
               v-model="form.deadline_at"
               type="date"
               class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
+              :disabled="isLoading"
             />
             <p v-if="errors.deadline_at" class="mt-1 text-sm text-red-500">{{ errors.deadline_at }}</p>
           </div>
@@ -119,6 +123,7 @@
               min="0"
               class="w-full border border-gray-200 rounded-lg px-4 py-2.5 focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition"
               placeholder="Например: 4.5"
+              :disabled="isLoading"
             />
             <p v-if="errors.estimated_hours" class="mt-1 text-sm text-red-500">{{ errors.estimated_hours }}</p>
           </div>
@@ -128,16 +133,17 @@
         <div class="flex items-center space-x-3 pt-2">
           <button
             type="submit"
-            :disabled="isSubmitting"
+            :disabled="isLoading"
             class="btn btn-primary inline-flex items-center space-x-1"
           >
-            <span v-if="isSubmitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            <span>{{ isSubmitting ? 'Создание...' : 'Создать задачу' }}</span>
+            <span v-if="isLoading" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+            <span>{{ isLoading ? 'Сохранение...' : 'Сохранить изменения' }}</span>
           </button>
           <button
             type="button"
             @click="router.back()"
             class="btn btn-secondary"
+            :disabled="isLoading"
           >
             Отмена
           </button>
@@ -158,12 +164,13 @@ import { ArrowLeftIcon } from '../components/icons';
 
 const router = useRouter();
 const route = useRoute();
+const taskId = route.params.id;
 
-// ✅ Если передан project_id в query (?project_id=1)
-const projectIdFromQuery = route.query.project_id || null;
-
+// ----------------------------------------------
+// СОСТОЯНИЕ
+// ----------------------------------------------
 const form = ref({
-  project_id: projectIdFromQuery,
+  project_id: null,
   title: '',
   description: '',
   assignee_id: null,
@@ -179,7 +186,45 @@ const priorities = ref([]);
 const labels = ref([]);
 const errors = ref({});
 const error = ref('');
-const isSubmitting = ref(false);
+const isLoading = ref(false);
+
+// ----------------------------------------------
+// ФОРМАТИРОВАНИЕ ДАТЫ
+// ----------------------------------------------
+const formatDateForInput = (dateString) => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return date.toISOString().split('T')[0];
+  } catch {
+    return '';
+  }
+};
+
+// ----------------------------------------------
+// ЗАГРУЗКА ДАННЫХ
+// ----------------------------------------------
+const loadTask = async () => {
+  try {
+    const res = await axios.get(`/api/tasks/${taskId}`);
+    const task = res.data.data;
+
+    form.value = {
+      project_id: task.project?.id || null,
+      title: task.title || '',
+      description: task.description || '',
+      assignee_id: task.assignee?.id || null,
+      priority_id: task.priority?.id || null,
+      label_ids: task.labels?.map(l => l.id) || [],
+      deadline_at: formatDateForInput(task.deadline_at),
+      estimated_hours: task.estimated_hours || null,
+    };
+  } catch (e) {
+    console.error('Ошибка загрузки задачи', e);
+    error.value = 'Не удалось загрузить данные задачи';
+  }
+};
 
 const loadProjects = async () => {
   try {
@@ -217,10 +262,13 @@ const loadLabels = async () => {
   }
 };
 
+// ----------------------------------------------
+// ОТПРАВКА ФОРМЫ
+// ----------------------------------------------
 const handleSubmit = async () => {
   errors.value = {};
   error.value = '';
-  isSubmitting.value = true;
+  isLoading.value = true;
 
   const payload = {
     project_id: form.value.project_id,
@@ -234,24 +282,32 @@ const handleSubmit = async () => {
   };
 
   try {
-    await axios.post('/api/tasks', payload);
-    await router.push('/tasks');
+    await axios.put(`/api/tasks/${taskId}`, payload);
+    await router.push(`/tasks/${taskId}`);
   } catch (err) {
     if (err.response?.status === 422) {
       errors.value = err.response.data.errors || {};
       error.value = err.response.data.message || 'Ошибка валидации';
+    } else if (err.response?.status === 403) {
+      error.value = 'У вас нет прав на редактирование этой задачи';
     } else {
-      error.value = 'Произошла ошибка при создании задачи';
+      error.value = 'Произошла ошибка при обновлении задачи';
     }
   } finally {
-    isSubmitting.value = false;
+    isLoading.value = false;
   }
 };
 
-onMounted(() => {
-  loadProjects();
-  loadUsers();
-  loadPriorities();
-  loadLabels();
+// ----------------------------------------------
+// ЗАГРУЗКА ПРИ МОНТИРОВАНИИ
+// ----------------------------------------------
+onMounted(async () => {
+  await Promise.all([
+    loadTask(),
+    loadProjects(),
+    loadUsers(),
+    loadPriorities(),
+    loadLabels(),
+  ]);
 });
 </script>

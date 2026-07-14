@@ -35,6 +35,18 @@ enum TaskStatusEnum: string
         };
     }
 
+    public function color(): string
+    {
+        return match ($this) {
+            self::NEW => '#3b82f6',
+            self::IN_PROGRESS => '#f59e0b',
+            self::REVIEW => '#8b5cf6',
+            self::DONE => '#10b981',
+            self::CLOSED => '#6b7280',
+            self::ON_HOLD => '#ef4444',
+        };
+    }
+
     public function isFinal(): bool
     {
         return $this === self::CLOSED;

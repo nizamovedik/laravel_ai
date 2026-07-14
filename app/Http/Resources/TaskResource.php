@@ -22,6 +22,7 @@ class TaskResource extends JsonResource
                 return $status ? [
                     'value' => $status->value,
                     'name' => $status->label(),
+                    'color' => $status->color(),
                 ] : null;
             }),
             'priority' => $this->when($this->priority, function () {
@@ -30,20 +31,21 @@ class TaskResource extends JsonResource
                     'name' => $this->priority->name,
                     'code' => $this->priority->code,
                     'level' => $this->priority->level,
+                    'color' => $this->priority->color ?? '#6b7280',
                 ];
             }),
             'creator' => $this->creator ? [
-                            'id' => $this->creator->id,
-                            'name' => $this->creator->name,
-                        ] : null,
+                'id' => $this->creator->id,
+                'name' => $this->creator->name,
+            ] : null,
             'assignee' => $this->assignee ? [
-                            'id' => $this->assignee->id,
-                            'name' => $this->assignee->name,
-                        ] : null,
+                'id' => $this->assignee->id,
+                'name' => $this->assignee->name,
+            ] : null,
             'project' => $this->project ? [
-                            'id' => $this->project->id,
-                            'name' => $this->project->name,
-                        ] : null,
+                'id' => $this->project->id,
+                'name' => $this->project->name,
+            ] : null,
             'labels' => $this->whenLoaded('labels', function () {
                 return $this->labels->map(fn ($label) => [
                     'id' => $label->id,

@@ -44,6 +44,7 @@ Route::middleware('auth:sanctum')->group(function () {
             collect(TaskStatusEnum::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'name' => $case->label(),
+                'color' => $case->color(),
             ])
         );
     });
@@ -57,3 +58,4 @@ Route::middleware('auth:sanctum')->group(function () {
 // Авторизия
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth:sanctum');
+Route::post('/register', [AuthController::class, 'register']);

@@ -139,7 +139,7 @@ class CommentTest extends TestCase
             ->deleteJson("/api/comments/{$comment->id}");
 
         $response->assertStatus(200)
-            ->assertJson(['message' => 'Комментарий удалён']);
+            ->assertJson(['message' => 'Комментарий удалён!']);
 
         $this->assertSoftDeleted('comments', [
             'id' => $comment->id,

@@ -14,6 +14,7 @@ class TaskPriorityResource extends JsonResource
             'name' => $this->name,
             'code' => $this->code,
             'level' => $this->level,
+            'color' => $this->color ?? '#6b7280',
             'created_at' => $this->created_at?->toISOString(),
         ];
     }
