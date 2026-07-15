@@ -31,6 +31,13 @@
             <PencilSquareIcon class="w-4 h-4" />
             <span>Редактировать</span>
           </router-link>
+          <button
+            @click="showDeleteModal = true"
+            class="btn btn-danger inline-flex items-center space-x-1"
+          >
+            <TrashIcon class="w-4 h-4" />
+            <span>Удалить</span>
+          </button>
           <router-link :to="`/projects/${project.id}/tasks/create`" class="btn btn-primary flex items-center space-x-1">
             <PlusCircleIcon class="w-4 h-4" />
             <span>Новая задача</span>
@@ -51,25 +58,38 @@
         </h3>
         <CommentList type="project" :id="projectId" />
       </div>
+
+      <ConfirmModal
+        :show="showDeleteModal"
+        title="Удаление проекта"
+        :message="`Вы уверены, что хотите удалить проект «${project.name}»? Все задачи внутри него будут удалены безвозвратно.`"
+        confirm-text="Удалить проект"
+        :is-loading="isDeleting"
+        @confirm="deleteProject"
+        @cancel="showDeleteModal = false"
+      />
     </div>
   </AuthenticatedLayout>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import axios from 'axios';
 import AuthenticatedLayout from '../layouts/AuthenticatedLayout.vue';
 import KanbanBoard from '../components/KanbanBoard.vue';
 import CommentList from '../components/CommentList.vue';
+import ConfirmModal from '../components/ConfirmModal.vue';
 import {
   UserIcon,
   PencilSquareIcon,
   PlusCircleIcon,
   ChatBubbleLeftIcon,
+  TrashIcon,
 } from '../components/icons';
 
 const route = useRoute();
+const router = useRouter();
 const projectId = route.params.id;
 
 const project = ref({
@@ -88,6 +108,24 @@ const loadProject = async () => {
     console.log('📌 Проект загружен. Задач:', project.value.tasks?.length || 0);
   } catch (e) {
     console.error('Ошибка загрузки проекта', e);
+  }
+};
+
+const showDeleteModal = ref(false);
+const isDeleting = ref(false);
+
+const deleteProject = async () => {
+  isDeleting.value = true;
+
+  try {
+    await axios.delete(`/api/projects/${projectId}`);
+    showDeleteModal.value = false;
+    await router.push('/projects');
+  } catch (error) {
+    console.error('Ошибка удаления проекта:', error);
+    alert('Не удалось удалить проект');
+  } finally {
+    isDeleting.value = false;
   }
 };
 

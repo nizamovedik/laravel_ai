@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Models\Scopes\UserScopes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -26,32 +27,7 @@ class User extends Authenticatable
         'is_active' => 'boolean',
     ];
 
-    // Проверка ролей
-    public function isAdmin(): bool
-    {
-        return $this->role === 'admin';
-    }
-
-    public function isManager(): bool
-    {
-        return $this->role === 'manager';
-    }
-
-    public function isExecutor(): bool
-    {
-        return $this->role === 'executor';
-    }
-
-    public function hasRole(string $role): bool
-    {
-        return $this->role === $role;
-    }
-
     // Доступ ко всем пользователям (для админа)
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
 
     public function createdTasks(): HasMany
     {
@@ -76,5 +52,15 @@ class User extends Authenticatable
     public function comments(): HasMany
     {
         return $this->hasMany(Comment::class);
+    }
+
+    public function scopeActive($query)
+    {
+        return UserScopes::active($query);
+    }
+
+    public function scopeWithRole($query, string $role)
+    {
+        return UserScopes::withRole($query, $role);
     }
 }

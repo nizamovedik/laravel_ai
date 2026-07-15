@@ -6,6 +6,8 @@ use App\Models\Comment;
 use App\Models\Project;
 use App\Models\Task;
 use App\Models\User;
+use App\Observers\ProjectObserver;
+use App\Observers\TaskObserver;
 use App\Policies\CommentPolicy;
 use App\Policies\ProjectPolicy;
 use App\Policies\TaskPolicy;
@@ -43,5 +45,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(Task::class, TaskPolicy::class);
         Gate::policy(Comment::class, CommentPolicy::class);
         Gate::policy(Project::class, ProjectPolicy::class);
+
+        Project::observe(ProjectObserver::class);
+        Task::observe(TaskObserver::class);
     }
 }

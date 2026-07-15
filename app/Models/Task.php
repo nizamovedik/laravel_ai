@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\TaskStatusEnum;
+use App\Models\Scopes\TaskScopes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -62,35 +63,29 @@ class Task extends Model
         return $this->belongsToMany(TaskLabel::class, 'task_label_task');
     }
 
-    // Хелперы
-
-    // public function isNew(): bool
-    // {
-    //     return $this->status?->code === 'new';
-    // }
-
-    // public function isInProgress(): bool
-    // {
-    //     return $this->status?->code === 'in_progress';
-    // }
-
-    // public function isDone(): bool
-    // {
-    //     return $this->status?->code === 'done';
-    // }
-
-    // public function isClosed(): bool
-    // {
-    //     return $this->status?->code === 'closed';
-    // }
-
-    // public function isOverdue(): bool
-    // {
-    //     return $this->deadline_at && $this->deadline_at->isPast() && ! $this->isClosed();
-    // }
-
     public function comments(): MorphMany
     {
         return $this->morphMany(Comment::class, 'commentable');
+    }
+
+    // Локальные скоупы
+    public function scopeOverdue($query)
+    {
+        return TaskScopes::overdue($query);
+    }
+
+    public function scopeAssignedTo($query, int $userId)
+    {
+        return TaskScopes::assignedTo($query, $userId);
+    }
+
+    public function scopeWithStatus($query, string $status)
+    {
+        return TaskScopes::withStatus($query, $status);
+    }
+
+    public function scopeInProject($query, int $projectId)
+    {
+        return TaskScopes::inProject($query, $projectId);
     }
 }

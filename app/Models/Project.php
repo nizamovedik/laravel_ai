@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Scopes\ProjectScopes;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -73,41 +74,13 @@ class Project extends Model
         return $this->morphMany(Comment::class, 'commentable');
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | ХЕЛПЕРЫ (вспомогательные методы)
-    |--------------------------------------------------------------------------
-    */
-
-    /**
-     * Проверяет, активен ли проект
-     */
-    public function isActive(): bool
+    public function scopeAccessibleByUser($query, int $userId)
     {
-        return $this->status?->code === 'active';
+        return ProjectScopes::accessibleByUser($query, $userId);
     }
 
-    /**
-     * Проверяет, архивирован ли проект
-     */
-    public function isArchived(): bool
+    public function scopeActive($query)
     {
-        return $this->status?->code === 'archived';
-    }
-
-    /**
-     * Проверяет, является ли пользователь владельцем проекта
-     */
-    public function isOwner(User $user): bool
-    {
-        return $this->owner_id === $user->id;
-    }
-
-    /**
-     * Проверяет, является ли пользователь руководителем проекта
-     */
-    public function isTeamLead(User $user): bool
-    {
-        return $this->team_lead_id === $user->id;
+        return ProjectScopes::active($query);
     }
 }
