@@ -10,7 +10,6 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isAuthenticated: (state) => !!state.token,
         userName: (state) => state.user?.name || 'Гость',
-        userAvatar: (state) => state.user?.avatar || null,
     },
 
     actions: {
@@ -64,6 +63,13 @@ export const useAuthStore = defineStore('auth', {
         updateUser(userData) {
             this.user = { ...this.user, ...userData };
             localStorage.setItem('user', JSON.stringify(this.user));
+        },
+
+        clearUser() {
+            this.user = null;
+            this.token = null;
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
         },
     },
 });
