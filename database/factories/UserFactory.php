@@ -28,9 +28,32 @@ class UserFactory extends Factory
             'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            'password' => Hash::make('password'), // или bcrypt('password')
+            'role' => fake()->randomElement(['admin', 'manager', 'executor']),
+            'position' => fake()->jobTitle(),
+            'phone' => fake()->phoneNumber(),
+            'is_active' => true,
+            'settings' => json_encode(['theme' => 'light']),
+            'last_active_at' => now(),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    // Метод для админа
+    public function admin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'admin',
+            'email' => 'admin@example.com',
+        ]);
+    }
+
+    // Метод для менеджера
+    public function manager(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'role' => 'manager',
+        ]);
     }
 
     /**
