@@ -67,11 +67,6 @@ class TaskRepository
         $task->delete($task);
     }
 
-    public function syncLabels(Task $task, array $labelIds): void
-    {
-        $task->labels()->sync($labelIds);
-    }
-
     public function attachLabels(Task $task, array $labelIds): void
     {
         $task->labels()->attach($labelIds);

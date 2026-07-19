@@ -39,6 +39,7 @@ class UpdateTaskRequest extends FormRequest
             assigneeId: $this->has('assignee_id') ? (int) $this->input('assignee_id') : null,
             deadlineAt: $this->has('deadline_at') ? Carbon::parse($this->input('deadline_at')) : null,
             estimatedHours: $this->has('estimated_hours') ? (float) $this->input('estimated_hours') : null,
+            labelIds: $this->has('label_ids') ? $this->input('label_ids') : [],
         );
     }
 }

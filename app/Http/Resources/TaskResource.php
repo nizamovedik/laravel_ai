@@ -5,6 +5,7 @@ namespace App\Http\Resources;
 use App\Enums\TaskStatusEnum;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Illuminate\Support\Facades\Cache;
 
 class TaskResource extends JsonResource
 {
@@ -19,11 +20,20 @@ class TaskResource extends JsonResource
                     ? $this->status
                     : TaskStatusEnum::tryFrom($this->status);
 
-                return $status ? [
-                    'value' => $status->value,
-                    'name' => $status->label(),
-                    'color' => $status->color(),
-                ] : null;
+                if (! $status) {
+                    return null;
+                }
+
+                $cacheKey = 'status_'.$status->value;
+                $cached = Cache::remember($cacheKey, 3600, function () use ($status) {
+                    return [
+                        'value' => $status->value,
+                        'name' => $status->label(),
+                        'color' => $status->color(),
+                    ];
+                });
+
+                return $cached;
             }),
             'priority' => $this->when($this->priority, function () {
                 return [

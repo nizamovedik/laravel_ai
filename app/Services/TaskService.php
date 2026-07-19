@@ -5,17 +5,22 @@ namespace App\Services;
 use App\DTO\TaskData;
 use App\Enums\TaskStatusEnum;
 use App\Events\TaskStatusChanged;
+use App\Jobs\SendTaskCreatedNotification;
 use App\Models\Task;
+use App\Repositories\TaskLabelRepository;
 use App\Repositories\TaskRepository;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Redis;
 use InvalidArgumentException;
 
 class TaskService
 {
     public function __construct(
-        private TaskRepository $taskRepository
+        private TaskRepository $taskRepository,
+        private TaskLabelRepository $taskLabelRepository
     ) {}
 
     public function createTask(TaskData $data): Task
@@ -27,6 +32,16 @@ class TaskService
                     'status' => TaskStatusEnum::NEW,
                 ])
             );
+
+            if (! empty($data->labelIds)) {
+                $this->taskLabelRepository->syncLabels($task, $data->labelIds);
+            }
+
+            Cache::forget("project_tasks_{$task->project_id}");
+
+            Redis::incr("project:{$task->project_id}:tasks_count");
+
+            SendTaskCreatedNotification::dispatch($task);
 
             Log::info("Задача {$task->id} создана пользователем {$data->creatorId}");
 
@@ -55,6 +70,8 @@ class TaskService
         return DB::transaction(function () use ($task, $newStatus, $currentStatus, $changedByUserId) {
             // Обновляем статус
             $this->taskRepository->updateStatus($task, $newStatus->value);
+
+            Cache::forget("project_tasks_{$task->project_id}");
 
             // Дополнительная логика при переходах
             match ($newStatus) {
@@ -109,6 +126,12 @@ class TaskService
 
         $this->taskRepository->update($task, $updateData);
 
+        if (! empty($data->labelIds)) {
+            $this->taskLabelRepository->syncLabels($task, $data->labelIds);
+        }
+
+        Cache::forget("project_tasks_{$task->project_id}");
+
         // Логируем обновление
         Log::info("Задача {$task->id} обновлена пользователем {$userId}");
 
@@ -118,11 +141,11 @@ class TaskService
     public function deleteTask(Task $task): void
     {
         $this->taskRepository->delete($task);
-    }
+        $projectId = $task->project_id;
+        Redis::decr("project:{$projectId}:tasks_count");
 
-    public function syncLabels(Task $task, array $labelIds): void
-    {
-        $this->taskRepository->syncLabels($task, $labelIds);
+        Cache::forget("project_tasks_{$projectId}");
+
     }
 
     public function getFilteredTasks(array $filters, int $perPage = 20): LengthAwarePaginator

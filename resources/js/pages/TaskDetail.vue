@@ -34,6 +34,14 @@
               <span>Редактировать</span>
             </router-link>
 
+             <button
+              @click="showDeleteModal = true"
+              class="btn btn-danger text-sm px-3 py-1.5 inline-flex items-center gap-1"
+            >
+              <TrashIcon class="w-4 h-4" />
+              <span>Удалить</span>
+            </button>
+
             <select
               v-model="task.status"
               @change="changeStatus"
@@ -144,6 +152,15 @@
       </div>
     </div>
   </AuthenticatedLayout>
+  <ConfirmModal
+    :show="showDeleteModal"
+    title="Удаление задачи"
+    :message="`Вы уверены, что хотите удалить задачу «${task.title}»? Это действие необратимо.`"
+    confirm-text="Удалить задачу"
+    :is-loading="isDeleting"
+    @confirm="deleteTask"
+    @cancel="showDeleteModal = false"
+  />
 </template>
 
 <script setup>
@@ -161,11 +178,15 @@ import {
   ClockIcon,
   ChatBubbleLeftIcon,
   PencilSquareIcon,
+  TrashIcon,
 } from '../components/icons';
+import ConfirmModal from '../components/ConfirmModal.vue';
 
 const router = useRouter();
 const route = useRoute();
 const taskId = route.params.id;
+const showDeleteModal = ref(false);
+const isDeleting = ref(false);
 
 const task = ref({
   id: null,
@@ -250,6 +271,21 @@ const changeStatus = async () => {
     alert(message);
   } finally {
     isUpdating.value = false;
+  }
+};
+
+const deleteTask = async () => {
+  isDeleting.value = true;
+
+  try {
+    await axios.delete(`/api/tasks/${taskId}`);
+    showDeleteModal.value = false;
+    await router.push('/tasks');
+  } catch (error) {
+    console.error('Ошибка удаления задачи:', error);
+    alert('Не удалось удалить задачу');
+  } finally {
+    isDeleting.value = false;
   }
 };
 

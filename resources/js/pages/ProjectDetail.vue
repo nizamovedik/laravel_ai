@@ -20,10 +20,23 @@
               <UserIcon class="w-3.5 h-3.5" />
               <span>Тимлид: {{ project.team_lead?.name || 'Не указан' }}</span>
             </span>
+            <span class="flex items-center space-x-1">
+              <UserIcon class="w-3.5 h-3.5" />
+              <span>Задач в проекте: {{ project.tasks_count }}</span>
+            </span>
           </div>
         </div>
 
         <div class="flex items-center space-x-2">
+          <button
+            @click="generateReport"
+            :disabled="isGeneratingReport"
+            class="btn btn-secondary inline-flex items-center space-x-1"
+          >
+            <span v-if="isGeneratingReport" class="w-4 h-4 border-2 border-gray-600 border-t-transparent rounded-full animate-spin"></span>
+            <span v-else>📊</span>
+            <span>{{ isGeneratingReport ? 'Генерация...' : 'Отчёт' }}</span>
+          </button>
           <router-link
             :to="`/projects/${project.id}/edit`"
             class="btn btn-secondary inline-flex items-center space-x-1"
@@ -52,10 +65,6 @@
 
       <!-- Комментарии -->
       <div class="card p-6">
-        <h3 class="text-md font-semibold text-gray-800 mb-4 flex items-center space-x-2">
-          <ChatBubbleLeftIcon class="w-5 h-5 text-gray-500" />
-          <span>Комментарии</span>
-        </h3>
         <CommentList type="project" :id="projectId" />
       </div>
 
@@ -87,6 +96,8 @@ import {
   ChatBubbleLeftIcon,
   TrashIcon,
 } from '../components/icons';
+
+const isGeneratingReport = ref(false);
 
 const route = useRoute();
 const router = useRouter();
@@ -126,6 +137,20 @@ const deleteProject = async () => {
     alert('Не удалось удалить проект');
   } finally {
     isDeleting.value = false;
+  }
+};
+
+const generateReport = async () => {
+  isGeneratingReport.value = true;
+
+  try {
+    await axios.post(`/api/projects/${projectId}/generate-report`);
+    alert('Отчёт генерируется. Ссылка на скачивание будет в логах (пока что).');
+  } catch (error) {
+    console.error('Ошибка генерации отчёта:', error);
+    alert('Не удалось начать генерацию отчёта');
+  } finally {
+    isGeneratingReport.value = false;
   }
 };
 

@@ -8,6 +8,7 @@ use App\Http\Controllers\TaskController;
 use App\Http\Controllers\TaskLabelController;
 use App\Http\Controllers\TaskPriorityController;
 use App\Models\User;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -33,6 +34,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/{project}', 'show');
         Route::put('/{project}', 'update');
         Route::delete('/{project}', 'destroy');
+        Route::post('/{project}/generate-report', [ProjectController::class, 'generateReport']);
     });
 
     Route::get('/users', function () {
@@ -40,13 +42,15 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/task-statuses', function () {
-        return response()->json(
-            collect(TaskStatusEnum::cases())->map(fn ($case) => [
+        $statuses = Cache::remember('task_statuses', 3600, function () {
+            return collect(TaskStatusEnum::cases())->map(fn ($case) => [
                 'value' => $case->value,
                 'name' => $case->label(),
                 'color' => $case->color(),
-            ])
-        );
+            ]);
+        });
+
+        return response()->json($statuses);
     });
 
     Route::get('/task-priorities', [TaskPriorityController::class, 'index']);

@@ -16,19 +16,21 @@ class TaskData
         public readonly ?int $assigneeId,
         public readonly ?Carbon $deadlineAt,
         public readonly ?float $estimatedHours,
+        public readonly ?array $labelIds = [],
     ) {}
 
     public function toArray(): array
     {
-        return [
+        return array_filter([
             'title' => $this->title,
             'description' => $this->description,
             'project_id' => $this->projectId,
             'creator_id' => $this->creatorId,
+            'status' => $this->status,
             'priority_id' => $this->priorityId,
             'assignee_id' => $this->assigneeId,
             'deadline_at' => $this->deadlineAt,
             'estimated_hours' => $this->estimatedHours,
-        ];
+        ], fn ($value) => ! is_null($value));
     }
 }

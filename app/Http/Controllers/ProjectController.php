@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreProjectRequest;
 use App\Http\Requests\UpdateProjectRequest;
 use App\Http\Resources\ProjectResource;
+use App\Jobs\GenerateProjectReport;
 use App\Models\Project;
 use App\Services\ProjectService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Cache;
 
 class ProjectController extends Controller
 {
@@ -37,8 +39,16 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
+        $tasks = Cache::remember("project_tasks_{$project->id}", 3600, function () use ($project) {
+            return $project->tasks()
+                ->with(['priority', 'assignee', 'creator', 'labels'])
+                ->get();
+        });
+
+        $project->setRelation('tasks', $tasks);
+
         return new ProjectResource(
-            $project->load(['owner', 'teamLead', 'tasks'])
+            $project->load(['owner', 'teamLead'])
         );
     }
 
@@ -82,5 +92,16 @@ class ProjectController extends Controller
         $this->projectService->deleteProject($project);
 
         return response()->json(['message' => 'Проект удалён'], 200);
+    }
+
+    public function generateReport(Project $project): JsonResponse
+    {
+        $this->authorize('view', $project);
+
+        GenerateProjectReport::dispatch($project, auth()->id());
+
+        return response()->json([
+            'message' => 'Генерация отчёта начата. Проверьте логи для получения ссылки.',
+        ], 202);
     }
 }
