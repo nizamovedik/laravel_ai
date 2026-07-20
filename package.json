@@ -9,7 +9,6 @@
     "devDependencies": {
         "@tailwindcss/vite": "^4.0.0",
         "@vitejs/plugin-vue": "^6.0.7",
-        "axios": "^1.18.1",
         "concurrently": "^9.0.1",
         "laravel-vite-plugin": "^2.0.0",
         "tailwindcss": "^4.0.0",
@@ -19,7 +18,9 @@
         "@heroicons/vue": "^2.2.0",
         "pinia": "^3.0.4",
         "vue": "^3.5.39",
+        "axios": "^1.18.1",
         "vue-router": "^4.6.4",
-        "vue3-toastify": "^0.2.9"
+        "vue3-toastify": "^0.2.9",
+        "vue-draggable-next": "^2.3.0"
     }
 }
