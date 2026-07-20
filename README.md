@@ -44,14 +44,6 @@
 
 ---
 
-## 📦 Установка (локально)
-
-### 1. Клонировать репозиторий
-
-```bash
-git clone https://github.com/nizamovedik/laravel_ai.git
-cd laravel_ai
-
 📄 Лицензия
 MIT © Enizamov
 
