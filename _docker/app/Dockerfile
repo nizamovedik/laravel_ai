@@ -13,12 +13,18 @@ RUN apt-get update && apt-get install -y \
       autoconf \
       g++ \
       make \
-      && docker-php-ext-install pdo_mysql bcmath gd zip \
-      && pecl install redis \
+      libfreetype6-dev \
+      libjpeg62-turbo-dev \
+      && apt-get clean \
+      && rm -rf /var/lib/apt/lists/*
+
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+      && docker-php-ext-install pdo_mysql bcmath gd zip
+
+RUN pecl install redis \
       && docker-php-ext-enable redis \
       && apt-get purge -y --auto-remove autoconf g++ make \
-      && apt-get clean \
-      && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+      && rm -rf /tmp/* /var/tmp/*
 
 COPY ./_docker/app/php.ini /usr/local/etc/php/conf.d/php.ini
 
