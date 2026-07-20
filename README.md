@@ -48,8 +48,8 @@
 MIT © Enizamov
 
 🙌 Благодарности
-[Laravel](https://laravel.com/) — за надёжный и элегантный PHP-фреймворк.
-[Vue.js](https://vuejs.org/) — за реактивность и удобство работы с интерфейсом.
-[Tailwind CSS](https://tailwindcss.com/) — за чистый и быстрый стиль без лишнего CSS.
-[Redis](https://redis.io/) — за скорость и гибкость в кешировании и очередях.
-[Docker](https://www.docker.com/) — за контейнеризацию и упрощение деплоя.
+- [Laravel](https://laravel.com/) — за надёжный и элегантный PHP-фреймворк.
+- [Vue.js](https://vuejs.org/) — за реактивность и удобство работы с интерфейсом.
+- [Tailwind CSS](https://tailwindcss.com/) — за чистый и быстрый стиль без лишнего CSS.
+- [Redis](https://redis.io/) — за скорость и гибкость в кешировании и очередях.
+- [Docker](https://www.docker.com/) — за контейнеризацию и упрощение деплоя.
