@@ -46,30 +46,4 @@ enum TaskStatusEnum: string
             self::ON_HOLD => '#ef4444',
         };
     }
-
-    public function isFinal(): bool
-    {
-        return $this === self::CLOSED;
-    }
-
-    public function isActive(): bool
-    {
-        return in_array($this, [self::IN_PROGRESS, self::REVIEW]);
-    }
-
-    /**
-     * Проверяет, можно ли начать работу над задачей
-     */
-    public function isStartable(): bool
-    {
-        return $this === self::NEW || $this === self::ON_HOLD;
-    }
-
-    /**
-     * Проверяет, можно ли завершить задачу (перевести в "Готово" или "Закрыта")
-     */
-    public function isCompletable(): bool
-    {
-        return $this === self::REVIEW || $this === self::DONE;
-    }
 }

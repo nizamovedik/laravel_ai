@@ -9,7 +9,7 @@ class UpdateTaskStatusRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return true; // Позже добавим проверку через Policy
+        return true;
     }
 
     public function rules(): array
