@@ -5,7 +5,6 @@ namespace App\Repositories;
 use App\Enums\TaskStatusEnum;
 use App\Models\Task;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 
 class TaskRepository
 {
@@ -19,16 +18,6 @@ class TaskRepository
     public function findById(int $id): ?Task
     {
         return Task::find($id);
-    }
-
-    public function getTasksByProject(int $projectId): Collection
-    {
-        return Task::where('project_id', $projectId)->get();
-    }
-
-    public function getTasksByAssignee(int $assigneeId): Collection
-    {
-        return Task::where('assignee_id', $assigneeId)->get();
     }
 
     public function update(Task $task, array $data): bool
@@ -67,44 +56,25 @@ class TaskRepository
         $task->delete($task);
     }
 
-    public function attachLabels(Task $task, array $labelIds): void
-    {
-        $task->labels()->attach($labelIds);
-    }
-
-    public function detachLabels(Task $task, array $labelIds): void
-    {
-        $task->labels()->detach($labelIds);
-    }
-
     public function getFilteredTasks(array $filters, int $perPage = 20): LengthAwarePaginator
     {
         $query = Task::query()
             ->with(['priority', 'creator', 'assignee', 'project', 'labels']);
 
-        // Фильтр по статусу
-        // if (! empty($filters['status_id'])) {
-        //     $query->where('status', $filters['status_id']);
-        // }
-
-        // Фильтр по исполнителю
         if (! empty($filters['assignee_id'])) {
             $query->where('assignee_id', $filters['assignee_id']);
         }
 
-        // Фильтр по проекту
         if (! empty($filters['project_id'])) {
             $query->where('project_id', $filters['project_id']);
         }
 
-        // Фильтр по тегу
         if (! empty($filters['label_id'])) {
             $query->whereHas('labels', function ($q) use ($filters) {
                 $q->where('task_labels.id', $filters['label_id']);
             });
         }
 
-        // Поиск по названию
         if (! empty($filters['search'])) {
             $query->where('title', 'like', '%'.$filters['search'].'%');
         }

@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\TaskStatusEnum;
 use App\Http\Requests\StoreTaskRequest;
 use App\Http\Requests\UpdateTaskRequest;
 use App\Http\Requests\UpdateTaskStatusRequest;
@@ -82,16 +81,10 @@ class TaskController extends Controller
     {
         $this->authorize('updateStatus', $task);
 
-        $newStatus = TaskStatusEnum::tryFrom($request->input('status'));
-
-        if (! $newStatus) {
-            return response()->json(['error' => 'Некорректный статус'], 422);
-        }
-
         try {
             $this->taskService->changeStatus(
                 task: $task,
-                newStatus: $newStatus,
+                newStatus: $request->input('status'),
                 changedByUserId: auth()->id()
             );
 

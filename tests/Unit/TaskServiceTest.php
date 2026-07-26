@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Event;
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->task = Task::factory()->create([
-        'status' => TaskStatusEnum::NEW,
+        'status' => TaskStatusEnum::NEW->value,
         'creator_id' => $this->user->id,
     ]);
     $this->taskService = app(TaskService::class);
@@ -19,7 +19,7 @@ beforeEach(function () {
 test('can transition from NEW to IN_PROGRESS', function () {
     $result = $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::IN_PROGRESS,
+        'in_progress',
         $this->user->id
     );
 
@@ -30,7 +30,7 @@ test('can transition from NEW to IN_PROGRESS', function () {
 test('can transition from NEW to ON_HOLD', function () {
     $result = $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::ON_HOLD,
+        'on_hold',
         $this->user->id
     );
 
@@ -44,17 +44,17 @@ test('cannot transition from NEW to REVIEW directly', function () {
 
     $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::REVIEW,
+        'review',
         $this->user->id
     );
 });
 
 test('can transition from IN_PROGRESS to REVIEW', function () {
-    $this->task->update(['status' => TaskStatusEnum::IN_PROGRESS]);
+    $this->task->update(['status' => TaskStatusEnum::IN_PROGRESS->value]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::REVIEW,
+        'review',
         $this->user->id
     );
 
@@ -63,11 +63,11 @@ test('can transition from IN_PROGRESS to REVIEW', function () {
 });
 
 test('can transition from REVIEW to DONE', function () {
-    $this->task->update(['status' => TaskStatusEnum::REVIEW]);
+    $this->task->update(['status' => TaskStatusEnum::REVIEW->value]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::DONE,
+        'done',
         $this->user->id
     );
 
@@ -76,11 +76,11 @@ test('can transition from REVIEW to DONE', function () {
 });
 
 test('can transition from DONE to CLOSED', function () {
-    $this->task->update(['status' => TaskStatusEnum::DONE]);
+    $this->task->update(['status' => TaskStatusEnum::DONE->value]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::CLOSED,
+        'closed',
         $this->user->id
     );
 
@@ -89,23 +89,23 @@ test('can transition from DONE to CLOSED', function () {
 });
 
 test('cannot transition from CLOSED to any status', function () {
-    $this->task->update(['status' => TaskStatusEnum::CLOSED]);
+    $this->task->update(['status' => TaskStatusEnum::CLOSED->value]);
 
     $this->expectException(InvalidArgumentException::class);
 
     $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::NEW,
+        'new',
         $this->user->id
     );
 });
 
 test('can transition from ON_HOLD to NEW', function () {
-    $this->task->update(['status' => TaskStatusEnum::ON_HOLD]);
+    $this->task->update(['status' => TaskStatusEnum::ON_HOLD->value]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::NEW,
+        'new',
         $this->user->id
     );
 
@@ -114,11 +114,11 @@ test('can transition from ON_HOLD to NEW', function () {
 });
 
 test('can transition from DONE back to REVIEW', function () {
-    $this->task->update(['status' => TaskStatusEnum::DONE]);
+    $this->task->update(['status' => TaskStatusEnum::DONE->value]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::REVIEW,
+        'review',
         $this->user->id
     );
 
@@ -127,11 +127,11 @@ test('can transition from DONE back to REVIEW', function () {
 });
 
 test('can transition from REVIEW back to IN_PROGRESS', function () {
-    $this->task->update(['status' => TaskStatusEnum::REVIEW]);
+    $this->task->update(['status' => TaskStatusEnum::REVIEW->value]);
 
     $result = $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::IN_PROGRESS,
+        'in_progress',
         $this->user->id
     );
 
@@ -144,7 +144,7 @@ test('started_at is set when transitioning to IN_PROGRESS', function () {
 
     $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::IN_PROGRESS,
+        'in_progress',
         $this->user->id
     );
 
@@ -154,12 +154,12 @@ test('started_at is set when transitioning to IN_PROGRESS', function () {
 test('completed_at is set when transitioning to DONE', function () {
     $this->task->update([
         'completed_at' => null,
-        'status' => TaskStatusEnum::REVIEW,
+        'status' => TaskStatusEnum::REVIEW->value,
     ]);
 
     $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::DONE,
+        'done',
         $this->user->id
     );
 
@@ -169,12 +169,12 @@ test('completed_at is set when transitioning to DONE', function () {
 test('completed_at is set when transitioning to CLOSED', function () {
     $this->task->update([
         'completed_at' => null,
-        'status' => TaskStatusEnum::DONE,
+        'status' => TaskStatusEnum::DONE->value,
     ]);
 
     $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::CLOSED,
+        'closed',
         $this->user->id
     );
 
@@ -186,7 +186,7 @@ test('TaskStatusChanged event is dispatched', function () {
 
     $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::IN_PROGRESS,
+        'in_progress',
         $this->user->id
     );
 
@@ -201,7 +201,7 @@ test('TaskStatusChanged event is dispatched', function () {
 test('history is logged when status changes', function () {
     $this->taskService->changeStatus(
         $this->task,
-        TaskStatusEnum::IN_PROGRESS,
+        'in_progress',
         $this->user->id
     );
 
