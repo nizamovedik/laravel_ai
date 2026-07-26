@@ -50,6 +50,15 @@ jobs:
           key: npm-${{ hashFiles('package-lock.json') }}
           restore-keys: npm-
 
+      - name: Cache Vite build
+        uses: actions/cache@v4
+        with:
+          path: |
+            node_modules/.vite
+            public/build
+          key: vite-${{ hashFiles('resources/js/**/*', 'resources/css/**/*', 'vite.config.js') }}
+          restore-keys: vite-
+
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
@@ -111,3 +120,5 @@ jobs:
           file: _docker/app/Dockerfile
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
