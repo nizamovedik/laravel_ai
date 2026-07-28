@@ -31,6 +31,8 @@ COPY ./_docker/app/php.ini /usr/local/etc/php/conf.d/php.ini
 ENV COMPOSER_ALLOW_SUPERUSER=1
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
+RUN echo "listen = 9000" >> /usr/local/etc/php-fpm.d/zz-docker.conf
+
 WORKDIR /var/www
 COPY . /var/www
 RUN composer install --no-interaction --optimize-autoloader
