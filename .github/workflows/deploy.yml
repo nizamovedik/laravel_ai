@@ -122,3 +122,67 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha
           provenance: false
+
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Add server to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+
+      - name: Create .env file locally
+        run: |
+          echo "APP_NAME=Laravel" >> .env
+          echo "APP_ENV=${{ secrets.APP_ENV }}" >> .env
+          echo "APP_KEY=${{ secrets.APP_KEY }}" >> .env
+          echo "APP_DEBUG=false" >> .env
+          echo "APP_URL=${{ secrets.APP_URL }}" >> .env
+          echo "DB_CONNECTION=mysql" >> .env
+          echo "DB_HOST=db" >> .env
+          echo "DB_PORT=3306" >> .env
+          echo "DB_DATABASE=laravel_ai_docker" >> .env
+          echo "DB_USERNAME=root" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "QUEUE_CONNECTION=redis" >> .env
+          echo "CACHE_STORE=redis" >> .env
+          echo "REDIS_HOST=redis" >> .env
+          echo "REDIS_PASSWORD=null" >> .env
+          echo "REDIS_PORT=6379" >> .env
+          echo "MAIL_FROM_ADDRESS=${{ secrets.MAIL_FROM_ADDRESS }}" >> .env
+
+      - name: Copy files to server via SSH
+        uses: easingthemes/ssh-deploy@v5
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.SERVER_IP }}
+          REMOTE_USER: deploy
+          SOURCE: .env
+          TARGET: /opt/laravel_ai
+
+      - name: Copy docker-compose.prod.yml to server
+        uses: easingthemes/ssh-deploy@v5
+        with:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          REMOTE_HOST: ${{ secrets.SERVER_IP }}
+          REMOTE_USER: deploy
+          SOURCE: docker-compose.prod.yml
+          TARGET: /opt/laravel_ai/docker-compose.yml
+
+      - name: Deploy with docker compose
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: deploy
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/laravel_ai
+            docker compose pull
+            docker compose up -d
