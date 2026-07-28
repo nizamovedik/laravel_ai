@@ -8,6 +8,7 @@ services:
     volumes:
       - storage_data:/var/www/storage
       - ./.env:/var/www/.env
+      - ./_docker/nginx/conf.d:/etc/nginx/conf.d
     depends_on:
       - db
       - redis
