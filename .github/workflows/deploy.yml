@@ -1,197 +1,50 @@
-name: CI/CD Pipeline
+FROM php:8.4-fpm
 
-on:
-  push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
+RUN apt-get update && apt-get install -y \
+  apt-utils \
+  libpq-dev \
+  libpng-dev \
+  libzip-dev \
+  libssl-dev \
+  zlib1g-dev \
+  git \
+  zip unzip \
+  curl \
+  autoconf \
+  g++ \
+  make \
+  libfreetype6-dev \
+  libjpeg62-turbo-dev \
+  && apt-get clean \
+  && rm -rf /var/lib/apt/lists/*
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: nizamovedik/laravel_ai
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+  && docker-php-ext-install pdo_mysql bcmath gd zip
 
-jobs:
+RUN pecl install redis \
+  && docker-php-ext-enable redis \
+  && apt-get purge -y --auto-remove autoconf g++ make \
+  && rm -rf /tmp/* /var/tmp/*
 
-  test:
-    name: Run Tests
-    runs-on: ubuntu-latest
+COPY ./_docker/app/php.ini /usr/local/etc/php/conf.d/php.ini
 
-    services:
-      mysql:
-        image: mysql:8.4
-        env:
-          MYSQL_DATABASE: laravel_ai_docker
-          MYSQL_ROOT_PASSWORD: root
-        ports:
-          - 3306:3306
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
+ENV COMPOSER_ALLOW_SUPERUSER=1
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-      redis:
-        image: redis:7-alpine
-        ports:
-          - 6379:6379
-        options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=3
+RUN echo "listen = 9000" >> /usr/local/etc/php-fpm.d/zz-docker.conf
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+RUN curl -fsSL https://nodesource.com | bash - \
+  && apt-get install -y nodejs \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-      - name: Cache Composer dependencies
-        uses: actions/cache@v4
-        with:
-          path: vendor
-          key: composer-${{ hashFiles('composer.lock') }}
-          restore-keys: composer-
+WORKDIR /var/www
 
-      - name: Cache npm dependencies
-        uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: npm-${{ hashFiles('package-lock.json') }}
-          restore-keys: npm-
+COPY package*.json composer*.json ./
 
-      - name: Cache Vite build
-        uses: actions/cache@v4
-        with:
-          path: |
-            node_modules/.vite
-            public/build
-          key: vite-${{ hashFiles('resources/js/**/*', 'resources/css/**/*', 'vite.config.js') }}
-          restore-keys: vite-
+RUN composer install --no-interaction --no-scripts --no-autoloader
+RUN npm cid
 
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
-        with:
-          php-version: '8.4'
-          extensions: mbstring, pdo_mysql, redis, zip, intl
-          tools: composer
+COPY . /var/www
 
-      - name: Copy .env
-        run: cp .env.example .env
-
-      - name: Install PHP dependencies
-        run: composer install --no-interaction --no-progress
-
-      - name: Generate key
-        run: php artisan key:generate
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22.12.0'
-          cache: 'npm'
-
-      - name: Install npm dependencies
-        run: npm ci
-
-      - name: Build Vite assets
-        run: npm run build
-
-      - name: Run migrations and tests
-        run: |
-          php artisan migrate --seed
-          php artisan test
-
-  build:
-    name: Build Docker Image
-    runs-on: ubuntu-latest
-    needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    
-    permissions:
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Log in to Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: _docker/app/Dockerfile
-          push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-          cache-from: type=gha
-          provenance: false
-
-  deploy:
-    name: Deploy to Server
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Add server to known_hosts
-        run: |
-          mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
-
-      - name: Create .env file locally
-        run: |
-          echo "APP_NAME=Laravel" >> .env
-          echo "APP_ENV=${{ secrets.APP_ENV }}" >> .env
-          echo "APP_KEY=${{ secrets.APP_KEY }}" >> .env
-          echo "APP_DEBUG=false" >> .env
-          echo "APP_URL=${{ secrets.APP_URL }}" >> .env
-          echo "DB_CONNECTION=mysql" >> .env
-          echo "DB_HOST=db" >> .env
-          echo "DB_PORT=3306" >> .env
-          echo "DB_DATABASE=laravel_ai_docker" >> .env
-          echo "DB_USERNAME=root" >> .env
-          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
-          echo "QUEUE_CONNECTION=redis" >> .env
-          echo "CACHE_STORE=redis" >> .env
-          echo "REDIS_HOST=redis" >> .env
-          echo "REDIS_PASSWORD=null" >> .env
-          echo "REDIS_PORT=6379" >> .env
-          echo "MAIL_FROM_ADDRESS=${{ secrets.MAIL_FROM_ADDRESS }}" >> .env
-
-      - name: Copy files to server via SSH
-        uses: easingthemes/ssh-deploy@main
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.SERVER_IP }}
-          REMOTE_USER: deploy
-          SOURCE: .env
-          TARGET: /opt/laravel_ai
-      
-      - name: Copy _docker folder to server
-        uses: easingthemes/ssh-deploy@main
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.SERVER_IP }}
-          REMOTE_USER: deploy
-          SOURCE: _docker
-          TARGET: /opt/laravel_ai
-
-      - name: Copy docker-compose.prod.yml to server
-        uses: easingthemes/ssh-deploy@main
-        with:
-          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-          REMOTE_HOST: ${{ secrets.SERVER_IP }}
-          REMOTE_USER: deploy
-          SOURCE: docker-compose.prod.yml
-          TARGET: /opt/laravel_ai/docker-compose.yml
-
-      - name: Deploy with docker compose
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.SERVER_IP }}
-          username: deploy
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: |
-            cd /opt/laravel_ai
-            docker compose pull
-            docker compose up -d
+RUN composer dump-autoload --optimize
+RUN npm run build

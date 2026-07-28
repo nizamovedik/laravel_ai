@@ -7,9 +7,8 @@ services:
       - .env
     volumes:
       - storage_data:/var/www/storage
-      # Создаем именованный volume для папки public, чтобы поделиться ей с Nginx
-      - public_data:/var/www/public 
-      - ./.env:/var/www/.env 
+      - public_data:/var/www/public
+      - ./.env:/var/www/.env
     depends_on:
       - db
       - redis
@@ -24,7 +23,6 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      # Подключаем ту самую папку public из контейнера app
       - public_data:/var/www/public:ro
       - ./_docker/nginx/conf.d:/etc/nginx/conf.d:ro
       - /etc/letsencrypt/live/nizamov-eduard.ru/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
@@ -63,7 +61,6 @@ volumes:
     driver: local
   storage_data:
     driver: local
-  # Объявляем новый volume для статики
   public_data:
     driver: local
 
