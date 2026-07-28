@@ -35,4 +35,16 @@ RUN echo "listen = 9000" >> /usr/local/etc/php-fpm.d/zz-docker.conf
 
 WORKDIR /var/www
 COPY . /var/www
+
+# Установка зависимостей PHP
 RUN composer install --no-interaction --optimize-autoloader
+
+# === ДОБАВЛЕННЫЙ БЛОК ДЛЯ СБОРКИ СТАТИКИ VITE ===
+# 1. Устанавливаем Node.js и npm (используем стабильную 20-ю или 22-ю версию из официального репозитория Debian)
+RUN curl -fsSL https://nodesource.com | bash - \
+    && apt-get install -y nodejs \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# 2. Устанавливаем npm-пакеты и собираем Vite-манифест
+RUN npm install && npm run build
+# ===============================================
