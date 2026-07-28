@@ -14,7 +14,6 @@ RUN apt-get update && apt-get install -y \
       autoconf \
       g++ \
       make \
-      gnupg \
       libfreetype6-dev \
       libjpeg62-turbo-dev \
       && apt-get clean \
@@ -39,9 +38,8 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
 RUN echo "listen = 9000" >> /usr/local/etc/php-fpm.d/zz-docker.conf
 
-# Установка Node.js (исправленный скрипт NodeSource с поддержкой GPG-ключей)
-RUN curl -fsSL https://nodesource.com | bash - \
-    && apt-get install -y nodejs \
+# Установка Node.js и npm напрямую из дистрибутива (БЕЗ использования curl и внешних скриптов)
+RUN apt-get update && apt-get install -y nodejs npm \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /var/www
