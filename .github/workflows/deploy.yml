@@ -159,7 +159,7 @@ jobs:
           echo "MAIL_FROM_ADDRESS=${{ secrets.MAIL_FROM_ADDRESS }}" >> .env
 
       - name: Copy files to server via SSH
-        uses: easingthemes/ssh-deploy@v5
+        uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           REMOTE_HOST: ${{ secrets.SERVER_IP }}
@@ -168,7 +168,7 @@ jobs:
           TARGET: /opt/laravel_ai
 
       - name: Copy docker-compose.prod.yml to server
-        uses: easingthemes/ssh-deploy@v5
+        uses: easingthemes/ssh-deploy@main
         with:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           REMOTE_HOST: ${{ secrets.SERVER_IP }}
