@@ -9,6 +9,7 @@ services:
       - storage_data:/var/www/storage
       - ./.env:/var/www/.env
       - ./_docker/nginx/conf.d:/etc/nginx/conf.d
+      - ./:/var/www
     depends_on:
       - db
       - redis
@@ -26,6 +27,7 @@ services:
       - ./_docker/nginx/conf.d:/etc/nginx/conf.d
       - /etc/letsencrypt/live/nizamov-eduard.ru/fullchain.pem:/etc/nginx/ssl/fullchain.pem:ro
       - /etc/letsencrypt/live/nizamov-eduard.ru/privkey.pem:/etc/nginx/ssl/privkey.pem:ro
+      - ./:/var/www
 
   db:
     image: mysql:8.4
