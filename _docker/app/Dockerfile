@@ -34,3 +34,5 @@ RUN curl -sS https://getcomposer.org | php -- \
     --install-dir=/usr/local/bin
 
 WORKDIR /var/www
+COPY . /var/www
+RUN composer install --no-interaction --optimize-autoloader
