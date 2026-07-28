@@ -7,6 +7,7 @@ services:
       - .env
     volumes:
       - storage_data:/var/www/storage
+      - ./.env:/var/www/.env
     depends_on:
       - db
       - redis
